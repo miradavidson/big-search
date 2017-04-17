@@ -1,10 +1,18 @@
 import mmap
-import multiprocessing as mp
+import multiprocessing
 
-with open("sampleseq.fasta", "r+") as f:
-    mm = mmap.mmap(f.fileno(), 0)
+from Bio import SeqIO
+record = SeqIO.read("sampleseq.fasta", "fasta")
+gene = record.format("fasta")
 
-def findAlignment(query, data):
+endOfDscp = gene.index('\n')
+reformat = gene[(endOfDscp+1):]
+Bases = reformat.replace("\n", "")
+a = int(len(Bases)/4)
+extra = len(Bases)%4
+
+def findAlignment(query, dat, pno, rest):
+    data = dat[(a*pno):(a*(pno+1)+rest)]
     M = len(query)
     N = len(data)
 
@@ -20,7 +28,7 @@ def findAlignment(query, data):
             j += 1
 
         if j == M:
-            print("Found pattern at index " + str(i - j))
+            print("Found pattern at index " + str((a*pno) + i - j) + ".")
             j = lps[j - 1]
         elif i < N and query[j] != data[i]:
             if j != 0:
@@ -44,8 +52,16 @@ def LPSArray(query, M, lps):
                 lps[i] = 0
                 i += 1
 
-listFormat = list(mm)
-endOfDscp = list(mm).index(b'\n')
-reformat = (listFormat[(endOfDscp+1):])
-Bases = [s for s in reformat if s != b'\n']
-print(Bases)
+query_here = input("Enter your query sequence: ")
+
+if __name__ == '__main__':
+    for i in range(3):
+        p = multiprocessing.Process(target=findAlignment, args=(query_here, Bases, (1*i),0))
+        p.start()
+
+def multiprocess():
+    Process(target=findAlignment, args = (query_here, Bases, 0,0)).start()
+    Process(target=findAlignment, args = (query_here, Bases, 1,0)).start()
+    Process(target=findAlignment, args = (query_here, Bases, 2,0)).start()
+    Process(target=findAlignment, args = (query_here, Bases, 3,extra)).start()
+    print("End of search.")

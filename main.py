@@ -19,3 +19,6 @@ def findAlignment(query, data):
 query_here = input("Enter your query sequence: ")
 
 findAlignment(query_here, gene)
+
+with open("sampleseq.fasta", "r+b") as f:
+    mm = mmap.mmap(f.fileno(), 0)
