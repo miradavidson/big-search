@@ -8,7 +8,7 @@ gene = record.format("fasta")
 # ONLY FINDS THE FIRST MATCH
 # STILL TAKES GENE ID (FIRST LINE) INTO ACCOUNT
 
-def finder(query, data):
+def findAlignment(query, data):
     if query in data:
         print(data.index(query))
     else:
@@ -18,4 +18,4 @@ def finder(query, data):
 
 query_here = input("Enter your query sequence: ")
 
-finder(query_here, gene)
+findAlignment(query_here, gene)
