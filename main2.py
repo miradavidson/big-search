@@ -1,11 +1,8 @@
-import multiprocessing
+import mmap
+import multiprocessing as mp
 
-import numpy as np
-
-from Bio import SeqIO
-
-record = SeqIO.read("sampleseq.fasta", "fasta")
-gene = record.format("fasta")
+with open("sampleseq.fasta", "r+") as f:
+    mm = mmap.mmap(f.fileno(), 0)
 
 def findAlignment(query, data):
     M = len(query)
@@ -47,8 +44,8 @@ def LPSArray(query, M, lps):
                 lps[i] = 0
                 i += 1
 
-listFormat = list(gene)
-endOfDscp = list(gene).index('\n')
+listFormat = list(mm)
+endOfDscp = list(mm).index(b'\n')
 reformat = (listFormat[(endOfDscp+1):])
-Bases = [s for s in reformat if s != '\n']
+Bases = [s for s in reformat if s != b'\n']
 print(Bases)
