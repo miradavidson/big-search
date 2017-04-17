@@ -1,67 +1,80 @@
+import pysam
 import mmap
-import multiprocessing
+import timeit
+from multiprocessing import Process, Manager
 
-from Bio import SeqIO
-record = SeqIO.read("sampleseq.fasta", "fasta")
-gene = record.format("fasta")
+sequence_filename = "genome_first_split.fasta"
+sequence_name = "1"
 
-endOfDscp = gene.index('\n')
-reformat = gene[(endOfDscp+1):]
-Bases = reformat.replace("\n", "")
-a = int(len(Bases)/4)
-extra = len(Bases)%4
 
-def findAlignment(query, dat, pno, rest):
-    data = dat[(a*pno):(a*(pno+1)+rest)]
-    M = len(query)
-    N = len(data)
+def find_alignment(query, dat, sec_len, proc_offset, rest, all_alignments):
+    start_point = sec_len * proc_offset - len(query)
+    end_point = sec_len * (proc_offset + 1) + rest
+    if start_point < 0:
+        start_point = 0
+    data = dat[start_point:end_point]
+    m = len(query)
+    n = len(data)
 
-    lps = [0] * M
+    lps = [0] * m
     j = 0
 
-    LPSArray(query, M, lps)
+    lps_array(query, m, lps)
 
     i = 0
-    while i < N:
+    while i < n:
         if query[j] == data[i]:
             i += 1
             j += 1
 
-        if j == M:
-            print("Found pattern at index " + str((a*pno) + i - j) + ".")
+        if j == m:
+            all_alignments.append(start_point + i - j)
             j = lps[j - 1]
-        elif i < N and query[j] != data[i]:
+        elif i < n and query[j] != data[i]:
             if j != 0:
                 j = lps[j - 1]
             else:
                 i += 1
 
-def LPSArray(query, M, lps):
-    len = 0
-    i = 1
 
-    while i < M:
-        if query[i] == query[len]:
-            len += 1
-            lps[i] = len
-            i += 1
+def lps_array(query, m, lps):
+    length = 0
+    ind = 1
+
+    while ind < m:
+        if query[ind] == query[length]:
+            length += 1
+            lps[ind] = length
+            ind += 1
         else:
-            if len != 0:
-                len = lps[len - 1]
+            if length != 0:
+                length = lps[length - 1]
             else:
-                lps[i] = 0
-                i += 1
+                lps[ind] = 0
+                ind += 1
 
-query_here = input("Enter your query sequence: ")
 
 if __name__ == '__main__':
-    for i in range(3):
-        p = multiprocessing.Process(target=findAlignment, args=(query_here, Bases, (1*i),0))
-        p.start()
+    samfile = pysam.FastaFile(sequence_filename)
+    genome = samfile.fetch(sequence_name)
 
-def multiprocess():
-    Process(target=findAlignment, args = (query_here, Bases, 0,0)).start()
-    Process(target=findAlignment, args = (query_here, Bases, 1,0)).start()
-    Process(target=findAlignment, args = (query_here, Bases, 2,0)).start()
-    Process(target=findAlignment, args = (query_here, Bases, 3,extra)).start()
-    print("End of search.")
+    num_processes = 4  # define number of processes
+    section_length = int(len(genome) / num_processes)
+    extra = len(genome) % num_processes
+
+    manager = Manager()
+    all_alignments = manager.list()
+
+    query = input("Enter your query sequence: ")
+    procs = []
+    start = timeit.default_timer()
+    for i in range(num_processes):  # start each of the processes and add to procs list
+        p = Process(target=find_alignment, args=(query, genome, section_length, i, 0, all_alignments))
+        p.start()
+        procs.append(p)
+    print("Started all processes.")
+    while any([p.is_alive() for p in procs]):  # check if any processes are still running
+        pass
+    stop = timeit.default_timer()
+    print("Time taken: {} seconds.".format(stop - start))
+    print(all_alignments)
