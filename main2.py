@@ -1,50 +1,74 @@
 import pysam
-import mmap
 import timeit
 from multiprocessing import Process, Manager
 
-sequence_filename = "sampleseq.fasta"
-sequence_name = "sp|P37840|SYUA_HUMAN"
+sequence_filename = "genome_first_split.fasta"
+sequence_name = "1"
 
 
 def find_alignment(query, dat, sec_len, proc_offset, rest, all_alignments, k_max):
+    """
+    Finds all substrings of dat that match query up to k_max mismatches.
+    Input: query string, full dataset, desired sequence length, process number, maximum k mismatch.
+    Output: all alignments as list, managed by process manager.
+    """
     start_point = sec_len * proc_offset - len(query)
     end_point = sec_len * (proc_offset + 1) + rest
     if start_point < 0:
         start_point = 0
-    data = dat[start_point:end_point]
+    data = dat[start_point:end_point] # defines the data section per process
     m = len(query)
     n = len(data)
 
     lps = [0] * m
-    j = 0
+    j = 0 # index for query[]
 
+    lps_array(query, m, lps) # preprocesses the query
 
-    lps_array(query, m, lps)
-
-    i = 0
+    i = 0 # index for data[]
     k = 0
     while i < n:
         if query[j] == data[i]:
             i += 1
             j += 1
-
         if j == m:
             all_alignments.append(start_point + i - j)
             j = lps[j - 1]
-
+            k = 0
+        elif j == m - (k_max - k):
+            all_alignments.append(start_point + i - j)
+            j = lps[j - 1]
+            i += k_max - k
+            k = 0
         elif i < n and query[j] != data[i]:
-            if k < k_max and query[j+1] == data[i+1]:
-                i += 1
-                j += 1
-                k += 1
+            if k < k_max:
+                match = False
+                for z in range(1, k_max-k+1):
+                    if j < m-z and i < n-z and query[j+z] == data[i+z]:
+                        i += z
+                        j += z
+                        k += z
+                        match = True
+                        break
+                if not match:
+                    k = 0
+                    if j != 0:
+                        j = lps[j - 1]
+                    else:
+                        i += 1
             else:
+                k = 0
                 if j != 0:
                     j = lps[j - 1]
                 else:
                     i += 1
 
 def lps_array(query, m, lps):
+    """
+    Calculates LPS array of query for KMP string search.
+    Input: query string, length of query and array of the same length.
+    Output: LPS array.
+    """
     length = 0
     ind = 1
 
@@ -62,22 +86,30 @@ def lps_array(query, m, lps):
 
 
 if __name__ == '__main__':
+    """
+    Takes FASTA formatted genome and, given a query, finds substring that match with up to k mismatches.
+    """
     samfile = pysam.FastaFile(sequence_filename)
-    genome = samfile.fetch(sequence_name)
+    genome = samfile.fetch(sequence_name) # fetches each chromosome individually
 
     num_processes = 4  # define number of processes
-    section_length = int(len(genome) / num_processes)
+    section_length = int(len(genome) / num_processes) # divides the data for process
     extra = len(genome) % num_processes
 
     manager = Manager()
-    all_alignments = manager.list()
+    all_alignments = manager.list() # creates a list of indices
 
     query = input("Enter your query sequence: ")
+    while not 3 < len(query) < 151:
+        query = input("Please enter a query sequence between 4 and 150 nucleotides: ")
     k_max = int(input("Enter the value of k: "))
     procs = []
     start = timeit.default_timer()
+    leftovers = 0
     for i in range(num_processes):  # start each of the processes and add to procs list
-        p = Process(target=find_alignment, args=(query, genome, section_length, i, 0, all_alignments, k_max))
+        if i == num_processes - 1:
+            leftovers = extra
+        p = Process(target=find_alignment, args=(query, genome, section_length, i, leftovers, all_alignments, k_max))
         p.start()
         procs.append(p)
     print("Started all processes.")
@@ -86,3 +118,4 @@ if __name__ == '__main__':
     stop = timeit.default_timer()
     print("Time taken: {} seconds.".format(stop - start))
     print(all_alignments)
+    print([genome[i:(i+len(query))] for i in all_alignments])
