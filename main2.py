@@ -3,11 +3,11 @@ import mmap
 import timeit
 from multiprocessing import Process, Manager
 
-sequence_filename = "genome_first_split.fasta"
-sequence_name = "1"
+sequence_filename = "sampleseq.fasta"
+sequence_name = "sp|P37840|SYUA_HUMAN"
 
 
-def find_alignment(query, dat, sec_len, proc_offset, rest, all_alignments):
+def find_alignment(query, dat, sec_len, proc_offset, rest, all_alignments, k_max):
     start_point = sec_len * proc_offset - len(query)
     end_point = sec_len * (proc_offset + 1) + rest
     if start_point < 0:
@@ -19,9 +19,11 @@ def find_alignment(query, dat, sec_len, proc_offset, rest, all_alignments):
     lps = [0] * m
     j = 0
 
+
     lps_array(query, m, lps)
 
     i = 0
+    k = 0
     while i < n:
         if query[j] == data[i]:
             i += 1
@@ -30,12 +32,17 @@ def find_alignment(query, dat, sec_len, proc_offset, rest, all_alignments):
         if j == m:
             all_alignments.append(start_point + i - j)
             j = lps[j - 1]
-        elif i < n and query[j] != data[i]:
-            if j != 0:
-                j = lps[j - 1]
-            else:
-                i += 1
 
+        elif i < n and query[j] != data[i]:
+            if k < k_max and query[j+1] == data[i+1]:
+                i += 1
+                j += 1
+                k += 1
+            else:
+                if j != 0:
+                    j = lps[j - 1]
+                else:
+                    i += 1
 
 def lps_array(query, m, lps):
     length = 0
@@ -66,10 +73,11 @@ if __name__ == '__main__':
     all_alignments = manager.list()
 
     query = input("Enter your query sequence: ")
+    k_max = int(input("Enter the value of k: "))
     procs = []
     start = timeit.default_timer()
     for i in range(num_processes):  # start each of the processes and add to procs list
-        p = Process(target=find_alignment, args=(query, genome, section_length, i, 0, all_alignments))
+        p = Process(target=find_alignment, args=(query, genome, section_length, i, 0, all_alignments, k_max))
         p.start()
         procs.append(p)
     print("Started all processes.")
