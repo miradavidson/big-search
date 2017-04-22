@@ -3,7 +3,7 @@ import timeit
 from multiprocessing import Process, Manager
 from time import localtime, strftime
 
-sequence_filename = "genome_first_split.fasta"
+sequence_filename = "Homo_sapiens.fa"
 
 def find_alignment(query, dat, sec_len, proc_offset, rest, all_alignments, k_max):
     """
@@ -38,6 +38,7 @@ def find_alignment(query, dat, sec_len, proc_offset, rest, all_alignments, k_max
         # find substring with mismatches at end of query
         elif j == m - (k_max - k):
             all_alignments.append(start_point + i - j)
+            print(start_point+i-j)
             j = lps[j - 1]
             i += k_max - k
             k = 0
@@ -94,7 +95,14 @@ if __name__ == '__main__':
     """
     samfile = pysam.FastaFile(sequence_filename)
 
-    chromosome = list(range(1, 2))
+    chromosome = list(range(1, 23))
+    chromosome.extend(['X', 'Y'])
+
+    query = input("Enter your query sequence: ")
+    while not 3 < len(query) < 151:
+        query = input("Please enter a query sequence between 4 and 150 bps: ")
+    k_max = int(input("Enter the value of k: "))
+
     for c in chromosome: # look at chromosomes individually
         genome = samfile.fetch(str(c))
         num_processes = 4  # define number of processes
@@ -104,10 +112,6 @@ if __name__ == '__main__':
         manager = Manager()
         all_alignments = manager.list() # create a list of indices
 
-        query = input("Enter your query sequence: ")
-        while not 3 < len(query) < 151:
-            query = input("Please enter a query sequence between 4 and 150 bps: ")
-        k_max = int(input("Enter the value of k: "))
         procs = []
         start = timeit.default_timer()
         leftovers = 0
@@ -124,8 +128,9 @@ if __name__ == '__main__':
         print("All matches written to file. Time taken: {} seconds.".format(stop - start))
 
         # write output to file
-        with open('results.txt', 'w') as f:
-            f.write("Chromosome" + str(c) + '\n')
-            for i in sorted(all_alignments, key=int):
-                f.write(str(i) + ", " + str(genome[i:(i + len(query))]) + '\n')
+        with open('results.txt', 'a') as f:
+            if all_alignments != []:
+                f.write("Found on chromosome " + str(c) + '\n')
+                for i in sorted(all_alignments, key=int):
+                    f.write(str(i) + ": " + str(genome[i:(i + len(query))]) + '\n')
         f.close()
