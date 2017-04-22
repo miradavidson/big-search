@@ -71,7 +71,7 @@ def lps_array(query, m, lps):
     """
     Calculates LPS array of query for KMP string search.
     Input: query string, length of query and array of the same length.
-    Output: LPS array.
+    Output: LPS array
     """
     length = 0
     ind = 1
