@@ -2,7 +2,7 @@ import pysam
 import timeit
 from multiprocessing import Process, Manager
 
-sequence_filename = "sampleseq.fasta"
+sequence_filename = "Homo_sapiens.fa"
 
 
 def find_alignment(query, dat, sec_len, proc_offset, all_alignments, k_max):
@@ -38,11 +38,13 @@ def find_alignment(query, dat, sec_len, proc_offset, all_alignments, k_max):
             j += 1
         if j == m:
             all_alignments.append(start_point + i - j)
+            print(start_point + i - j)
             j = lps[j - 1]
             k = 0
         # find substring with mismatches at end of query
         elif j == m - (k_max - k):
             all_alignments.append(start_point + i - j)
+            print(start_point + i - j)
             j = lps[j - 1]
             i += k_max - k
             k = 0
