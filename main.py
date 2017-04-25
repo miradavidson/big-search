@@ -101,8 +101,10 @@ if __name__ == '__main__':
         query = input("Please enter a query sequence between 4 and 150 bps: ")
     k_max = int(input("Enter the value of k: "))
 
+    chr_matches = {}
+    runtime = 0
+
     with pysam.FastxFile(sequence_filename) as fh:
-        chr_matches = {}
         for entry in fh:
             genome = entry.sequence
             num_processes = 4  # define number of processes
@@ -122,10 +124,14 @@ if __name__ == '__main__':
                 pass
             stop = timeit.default_timer()
             print("All matches written to file. Time taken: {} seconds.".format(stop - start))
-            chr_matches[entry.name] = [i + ":" + genome[i:(i + len(query))] for i in sorted(all_alignments, key=int)]
+            chr_matches[entry.name] = [str(i) + ":" + str(genome[i:(i + len(query))]) for i in sorted(all_alignments, key=int)]
+            runtime += stop - start
 
     # write output to file
     with open('results.txt', 'a') as f:
-        for i in chr_matches:
-            f.write("CHROMOSOME " + str(x) + '\n' + str(chr_matches[i] + '\n\n')
-    f.close
+        if i in sorted(chr_matches, key=chr_matches.get):
+            f.write("CHROMOSOME " + i + '\n')
+            for match in chr_matches[i]:
+                f.write(match + '\n')
+        print("Total time taken: {} seconds.".format(runtime))
+        f.close()
