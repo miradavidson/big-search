@@ -22,12 +22,4 @@ When a match is found, it's added to the list `all_alignments` which is a global
 Once all processes have completed their search, the all_alignments list is saved to a file with one index per line, along with the corresponding match at that index.
 
 ## Performance
-Preliminary testing was performed on a very small dataset. Once the initial functionality had been implemented, I started testing on the first chromosome, to give some idea of how long it would take on the full genome. The table below shows some experimental evidence of the performance of the program running on a MacBook with a quad-core processor and X GB of RAM.
-
-| Query String      | Mismatches           | Runtime  |
-| ------------- |:-------------:| -----:|
-| insert-here      | insert-here | insert-here |
-| insert-here      | insert-here      |   insert-here |
-| insert-here | insert-here      |    insert-here |
-
-The following table shows the runtimes recorded when the entire human genome was considered, searching each chromosome one by one.
+Testing resulted in a significant decrease in performance with an increase of k mismatches. This is a problem when used for the identification of mutations e.g. in evolved lineages. However, with CRISPR/Cas9 genome editing, Cas9 with one-base mismatch crRNA [cleaves target DNA less efficiently] (https://www.ncbi.nlm.nih.gov/pubmed/22745249) and two-base mismatched crRNA [does not function 96% of the time] (https://www.ncbi.nlm.nih.gov/pubmed/26189696). Therefore, this program seems like a suitable tool for the use of genome editing using CRISP/Cas9 technology.
