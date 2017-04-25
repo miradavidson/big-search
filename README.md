@@ -1,5 +1,5 @@
 # big-search
-Case Study in Python searching datasets larger than RAM. This describes my implementation.
+Case Study in Python searching datasets larger than RAM. This describes my implementation, as found in main.py.
 
 ## Structure
 ### Input
