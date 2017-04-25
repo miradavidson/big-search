@@ -12,7 +12,7 @@ def find_alignment(query, dat, sec_len, proc_offset, all_alignments, k_max):
     Output: all alignments as list, managed by process manager.
     """
     start_point = sec_len * proc_offset - len(query)
-    end_point = sec_len * (proc_offset + 1) + rest
+    end_point = sec_len * (proc_offset + 1)
     if start_point < 0:
         start_point = 0
     if proc_offset == num_processes -1:
@@ -111,7 +111,6 @@ if __name__ == '__main__':
 
             procs = []
             start = timeit.default_timer()
-            leftovers = 0
             for i in range(num_processes):  # start each of the processes and add to procs list
                 p = Process(target=find_alignment, args=(query, genome, section_length, i, all_alignments, k_max))
                 p.start()

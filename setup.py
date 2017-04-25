@@ -2,7 +2,6 @@
 
 import os
 import sys
-import subprocess
 
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
@@ -40,11 +39,11 @@ class Tox(TestCommand):
 setup(
     name='big-search',
     version=VERSION,
-    url='https://github.com/DeskGen/big-search',
-    author='YOUR NAME',
-    author_email='YOUR EMAIL',
-    maintainer='',
-    maintainer_email='',
+    url='https://github.com/miradavidson/big-search',
+    author='Mira Davidson',
+    author_email='mira.davidson15@imperial.ac.uk',
+    maintainer='Mira Davidson',
+    maintainer_email='mira.davidson15@imperial.ac.uk',
     description='Case Study in Python searching datasets larger than RAM.',
     packages=find_packages(),
     data_files=include('bin'),
