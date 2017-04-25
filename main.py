@@ -2,8 +2,7 @@ import pysam
 import timeit
 from multiprocessing import Process, Manager
 
-sequence_filename = "Homo_sapiens.fa"
-
+sequence_filename = "Homo_sapiens.fa" # put fasta file name here
 
 def find_alignment(query, dat, sec_len, proc_offset, all_alignments, k_max):
     """
@@ -130,6 +129,8 @@ if __name__ == '__main__':
     # write output to file
     with open('results.txt', 'a') as f:
         for i in sorted(chr_matches, key=chr_matches.get):
+            if chr_matches[i] == []:
+                continue
             f.write("CHROMOSOME " + i + '\n')
             for match in chr_matches[i]:
                 f.write(match + '\n')
