@@ -2,7 +2,7 @@ import pysam
 import timeit
 from multiprocessing import Process, Manager
 
-sequence_filename = "Homo_sapiens.fa"
+sequence_filename = "sampleseq.fasta"
 
 
 def find_alignment(query, dat, sec_len, proc_offset, all_alignments, k_max):
@@ -11,6 +11,7 @@ def find_alignment(query, dat, sec_len, proc_offset, all_alignments, k_max):
     Input: query string, full dataset, desired sequence length, process number, maximum k mismatch.
     Output: all alignments as list, managed by process manager.
     """
+    # define the data section per process
     start_point = sec_len * proc_offset - len(query)
     end_point = sec_len * (proc_offset + 1)
     if start_point < 0:
@@ -18,7 +19,8 @@ def find_alignment(query, dat, sec_len, proc_offset, all_alignments, k_max):
     if proc_offset == num_processes -1:
         data = dat[start_point:]
     else:
-        data = dat[start_point:end_point] # define the data section per process
+        data = dat[start_point:end_point]
+
     m = len(query)
     n = len(data)
 
@@ -44,7 +46,7 @@ def find_alignment(query, dat, sec_len, proc_offset, all_alignments, k_max):
             j = lps[j - 1]
             i += k_max - k
             k = 0
-        # find k mismatches
+        # find k mismatch
         elif i < n and query[j] != data[i]:
             if k < k_max and k_max != 0:
                 match = False
@@ -62,7 +64,6 @@ def find_alignment(query, dat, sec_len, proc_offset, all_alignments, k_max):
                     else:
                         i += 1
             else:
-                k = 0
                 if j != 0:
                     j = lps[j - 1]
                 else:
@@ -93,7 +94,7 @@ def lps_array(query, m, lps):
 
 if __name__ == '__main__':
     """
-    Takes FASTA formatted genome and, given a query, finds substring that match with up to k mismatches.
+    Takes FASTA formatted genome and, given a query, finds substrings that match with up to k mismatches.
     """
     query = input("Enter your query sequence: ")
     while not 3 < len(query) < 151:
@@ -101,6 +102,7 @@ if __name__ == '__main__':
     k_max = int(input("Enter the value of k: "))
 
     with pysam.FastxFile(sequence_filename) as fh:
+        chr_matches = {}
         for entry in fh:
             genome = entry.sequence
             num_processes = 4  # define number of processes
@@ -120,11 +122,10 @@ if __name__ == '__main__':
                 pass
             stop = timeit.default_timer()
             print("All matches written to file. Time taken: {} seconds.".format(stop - start))
+            chr_matches[entry.name] = [i + ":" + genome[i:(i + len(query))] for i in sorted(all_alignments, key=int)]
 
-            # write output to file
-            with open('results.txt', 'a') as f:
-                if all_alignments:
-                    f.write("CHROMOSOME " + str(entry.name) + '\n')
-                    for i in sorted(all_alignments, key=int):
-                        f.write(str(i) + ": " + str(genome[i:(i + len(query))]) + '\n\n')
-            f.close()
+    # write output to file
+    with open('results.txt', 'a') as f:
+        for i in chr_matches:
+            f.write("CHROMOSOME " + str(x) + '\n' + str(chr_matches[i] + '\n\n')
+    f.close
