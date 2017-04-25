@@ -124,14 +124,14 @@ if __name__ == '__main__':
                 pass
             stop = timeit.default_timer()
             print("All matches written to file. Time taken: {} seconds.".format(stop - start))
-            chr_matches[entry.name] = [str(i) + ":" + str(genome[i:(i + len(query))]) for i in sorted(all_alignments, key=int)]
+            chr_matches[entry.name] = [str(i) + ":" + str(genome[i:(i + len(query))]) for i in sorted(all_alignments)]
             runtime += stop - start
 
     # write output to file
     with open('results.txt', 'a') as f:
-        if i in sorted(chr_matches, key=chr_matches.get):
+        for i in sorted(chr_matches, key=chr_matches.get):
             f.write("CHROMOSOME " + i + '\n')
             for match in chr_matches[i]:
                 f.write(match + '\n')
-        print("Total time taken: {} seconds.".format(runtime))
+        f.write("Total time taken: {} seconds.".format(runtime))
         f.close()
