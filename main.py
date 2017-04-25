@@ -5,7 +5,7 @@ from multiprocessing import Process, Manager
 sequence_filename = "Homo_sapiens.fa"
 
 
-def find_alignment(query, dat, sec_len, proc_offset, rest, all_alignments, k_max):
+def find_alignment(query, dat, sec_len, proc_offset, all_alignments, k_max):
     """
     Finds all substrings of dat that match query up to k_max mismatches.
     Input: query string, full dataset, desired sequence length, process number, maximum k mismatch.
@@ -15,7 +15,10 @@ def find_alignment(query, dat, sec_len, proc_offset, rest, all_alignments, k_max
     end_point = sec_len * (proc_offset + 1) + rest
     if start_point < 0:
         start_point = 0
-    data = dat[start_point:end_point] # define the data section per process
+    if proc_offset == num_processes -1:
+        data = dat[start_point:]
+    else:
+        data = dat[start_point:end_point] # define the data section per process
     m = len(query)
     n = len(data)
 
@@ -102,7 +105,6 @@ if __name__ == '__main__':
             genome = entry.sequence
             num_processes = 4  # define number of processes
             section_length = int(len(genome) / num_processes) # divide the data into number of processes
-            extra = len(genome) % num_processes
 
             manager = Manager()
             all_alignments = manager.list() # create a list of indices
@@ -111,9 +113,7 @@ if __name__ == '__main__':
             start = timeit.default_timer()
             leftovers = 0
             for i in range(num_processes):  # start each of the processes and add to procs list
-                if i == num_processes - 1:
-                    leftovers = extra
-                p = Process(target=find_alignment, args=(query, genome, section_length, i, leftovers, all_alignments, k_max))
+                p = Process(target=find_alignment, args=(query, genome, section_length, i, all_alignments, k_max))
                 p.start()
                 procs.append(p)
             print("Started all processes.")
